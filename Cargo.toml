@@ -1,0 +1,8 @@
+[package]
+name = "xona"
+description = "🌌 A minimalist and fast terminal text editor."
+authors = ["Nehuén/Neth"]
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
