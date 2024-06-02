@@ -1,32 +1,10 @@
 <div align="center">
 
-<style>
-.logo {
-    height: 60px;
-}
-
-.title {
-    font: 35px 'Helvetica Neue', Helvetica, Arial, sans-serif;
-}
-
-.desc {
-    font: 15px 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    margin: -10px;
-    opacity: 0.8;
-    position: relative;
-    top: 5px;
-}
-
-.desc span {
-    color: #ed64e2;
-}
-</style>
-
-<img src="./public/icon.png" class="logo" />
+<img src="./public/icon.png" style="height: 70px; width: 70px" />
 
 <h1 class="title">Xona</h1>
 
-<p class="desc">A <span>minimalist</span>, <span>fast</span> and <span>easy to use</span> terminal <span>text editor.</span></p>
+_A minimalist, fast and easy to use terminal text editor._
 
 </div>
 
@@ -36,19 +14,19 @@
 
 ## ✨ Features
 
-- 🧩 **Plugins:** Write plugins with <span style="color: #ed64e2">_XonScript_</span>, Xona's own high-level, easy-to-learn language.
+- 🧩 **Plugins:** Write plugins with _XonScript_, Xona's own high-level, easy-to-learn language.
 
-- 🎀 **Minimalist:** <span style="color: #ed64e2">Lightweight</span> and only with what you need!
+- 🎀 **Minimalist:** _Lightweight_ and only with what you need!
 
-- 🚀 **Fast:** Are you in a hurry? <span style="color: #ed64e2">Xona</span> doesn't waste your time! He's <span style="color: #ed64e2">fast</span> at everything!
+- 🚀 **Fast:** Are you in a hurry? Xona doesn't waste your time! He's _fast_ at everything!
 
-- 💪🏼 **Easy to use:** You don't need to learn too many things, everything <span style="color: #ed64e2">is intuitive</span> and well detailed!
+- 💪🏼 **Easy to use:** You don't need to learn too many things, _everything is intuitive_ and well detailed!
 
-- 🎨 **Customizable:** You can <span style="color: #ed64e2">customize the editor</span> to your liking! Apply your essence.
+- 🎨 **Customizable:** You can _customize the editor_ to your liking! Apply your essence.
 
 ## 📚 Documentation
 
-One of the advantages of Xona is its <span style="color: #ed64e2">extensive and detailed documentation</span>, ready to be read quickly and without much complexity. At the moment, everything can be found at [docs folder](/docs).
+One of the advantages of Xona is its _extensive and detailed documentation_, ready to be read quickly and without much complexity. At the moment, everything can be found at [docs folder](/docs).
 
 ## 📄 License
 
