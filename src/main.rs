@@ -1,3 +1,9 @@
+mod cli {
+    pub mod init;
+}
+
+use cli::init;
+
 fn main() {
-    println!("Hello world!");
+    init::cli();
 }
