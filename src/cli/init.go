@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"xona/src/editor"
 
 	"github.com/urfave/cli/v2"
 )
@@ -28,7 +29,7 @@ func InitCli() {
 		Authors:               []*cli.Author{{Name: "Nehuén / Neth"}},
 		Version:               VERSION,
 		Action: func(*cli.Context) error {
-			fmt.Println("Hello friend!")
+			editor.Editor()
 			return nil
 		},
 	}
