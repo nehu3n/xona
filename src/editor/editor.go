@@ -46,17 +46,35 @@ func Editor(filePath string) {
 
 	draw := func() {
 		screen.Clear()
-		for y, line := range buffer.GetContent() {
-			lineNumber := strconv.Itoa(y + 1)
+
+		_, screenHeight := screen.Size()
+
+		cursorX, cursorY := buffer.GetCursor()
+		if cursorY < buffer.viewTop {
+			buffer.viewTop = cursorY
+		} else if cursorY >= buffer.viewTop+screenHeight {
+			buffer.viewTop = cursorY - screenHeight + 1
+		}
+
+		for y := 0; y < screenHeight; y++ {
+			lineIdx := buffer.viewTop + y
+			if lineIdx >= len(buffer.content) {
+				break
+			}
+			line := buffer.content[lineIdx]
+			lineNumber := strconv.Itoa(lineIdx + 1)
+
 			for x, r := range lineNumber {
 				screen.SetContent(x, y, r, nil, tcell.StyleDefault)
 			}
+
 			for x, r := range line {
 				screen.SetContent(len(lineNumber)+1+x, y, r, nil, tcell.StyleDefault)
 			}
 		}
-		cursorX, cursorY := buffer.GetCursor()
-		screen.ShowCursor(len(strconv.Itoa(cursorY+1))+1+cursorX, cursorY)
+
+		screen.ShowCursor(len(strconv.Itoa(cursorY+1))+1+cursorX, cursorY-buffer.viewTop)
+
 		screen.Show()
 	}
 

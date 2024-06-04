@@ -4,6 +4,7 @@ type Buffer struct {
 	content [][]rune
 	cursorX int
 	cursorY int
+	viewTop int
 }
 
 func NewBuffer() *Buffer {
@@ -11,6 +12,7 @@ func NewBuffer() *Buffer {
 		content: [][]rune{{}},
 		cursorX: 0,
 		cursorY: 0,
+		viewTop: 0,
 	}
 }
 
