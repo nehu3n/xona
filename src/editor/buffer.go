@@ -88,3 +88,20 @@ func (b *Buffer) InsertNewline() {
 	b.cursorX = 0
 	b.cursorY++
 }
+
+func (b *Buffer) SetCursor(x, y int) {
+	if y < 0 {
+		y = 0
+	} else if y >= len(b.content) {
+		y = len(b.content) - 1
+	}
+
+	if x < 0 {
+		x = 0
+	} else if x > len(b.content[y]) {
+		x = len(b.content[y])
+	}
+
+	b.cursorX = x
+	b.cursorY = y
+}

@@ -128,12 +128,27 @@ func Editor(filePath string) {
 
 	handleMouse := func(mouse *tcell.EventMouse) {
 		_, screenHeight := screen.Size()
-		if mouse.Buttons() == tcell.WheelDown {
+		switch mouse.Buttons() {
+		case tcell.Button1:
+			mouseScrollActive = false
+			mouseX, mouseY := mouse.Position()
+			newCursorY := buffer.viewTop + mouseY
+			if newCursorY < len(buffer.content) {
+				lineNumberWidth := len(strconv.Itoa(newCursorY+1)) + 1
+				if mouseX >= lineNumberWidth {
+					newCursorX := mouseX - lineNumberWidth
+					buffer.SetCursor(newCursorX, newCursorY)
+				} else {
+					buffer.SetCursor(0, newCursorY)
+				}
+				adjustViewTop()
+			}
+		case tcell.WheelDown:
 			mouseScrollActive = true
 			if buffer.viewTop < len(buffer.content)-screenHeight {
 				buffer.viewTop++
 			}
-		} else if mouse.Buttons() == tcell.WheelUp {
+		case tcell.WheelUp:
 			mouseScrollActive = true
 			if buffer.viewTop > 0 {
 				buffer.viewTop--
