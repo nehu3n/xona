@@ -22,6 +22,8 @@ func Editor(filePath string) {
 	screen.EnableMouse()
 	var mouseScrollActive bool = true
 
+	var quitAppConfirmation bool = false
+
 	buffer := NewBuffer()
 
 	if filePath != "" {
@@ -100,6 +102,7 @@ func Editor(filePath string) {
 
 		switch key.Key() {
 		case tcell.KeyCtrlC:
+			quitAppConfirmation = true
 			quit()
 			return
 		case tcell.KeyEnter:
@@ -157,6 +160,10 @@ func Editor(filePath string) {
 	}
 
 	for {
+		if quitAppConfirmation {
+			return
+		}
+
 		draw()
 		ev := screen.PollEvent()
 		switch ev := ev.(type) {
