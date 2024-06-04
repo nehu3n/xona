@@ -28,8 +28,10 @@ func InitCli() {
 		CustomAppHelpTemplate: helpTemplate,
 		Authors:               []*cli.Author{{Name: "Nehuén / Neth"}},
 		Version:               VERSION,
-		Action: func(*cli.Context) error {
-			editor.Editor()
+		Action: func(c *cli.Context) error {
+			filePath := c.Args().Get(0)
+
+			editor.Editor(filePath)
 			return nil
 		},
 	}

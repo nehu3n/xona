@@ -19,6 +19,16 @@ func (b *Buffer) Insert(char rune) {
 	b.cursorX++
 }
 
+func (b *Buffer) InsertString(text string) {
+	for _, char := range text {
+		if char == '\n' {
+			b.InsertNewline()
+		} else {
+			b.Insert(char)
+		}
+	}
+}
+
 func (b *Buffer) Delete() {
 	if b.cursorX > 0 {
 		b.content[b.cursorY] = append(b.content[b.cursorY][:b.cursorX-1], b.content[b.cursorY][b.cursorX:]...)

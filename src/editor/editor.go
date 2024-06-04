@@ -1,13 +1,15 @@
 package editor
 
 import (
+	"bufio"
 	"log"
+	"os"
 	"strconv"
 
 	"github.com/gdamore/tcell/v2"
 )
 
-func Editor() {
+func Editor(filePath string) {
 	screen, err := tcell.NewScreen()
 	if err != nil {
 		log.Fatalf("Failed to create screen: %v", err)
@@ -18,6 +20,24 @@ func Editor() {
 	defer screen.Fini()
 
 	buffer := NewBuffer()
+
+	if filePath != "" {
+		file, err := os.Open(filePath)
+		if err != nil {
+			log.Fatalf("Failed to open file: %v", err)
+		}
+		defer file.Close()
+
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			buffer.InsertString(scanner.Text())
+			buffer.InsertNewline()
+		}
+
+		if err := scanner.Err(); err != nil {
+			log.Fatalf("Failed to read file: %v", err)
+		}
+	}
 
 	quit := func() {
 		screen.Fini()
