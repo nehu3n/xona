@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 )
@@ -23,8 +24,12 @@ func Editor(filePath string) {
 	var mouseScrollActive bool = true
 
 	var quitAppConfirmation bool = false
+	var unsavedChanges bool = false
 
 	buffer := NewBuffer()
+
+	var notificationMessage string
+	var notificationEnd time.Time
 
 	if filePath != "" {
 		file, err := os.Open(filePath)
@@ -49,10 +54,36 @@ func Editor(filePath string) {
 		log.Println("Xona quited")
 	}
 
+	showNotification := func(message string) {
+		notificationMessage = message
+		notificationEnd = time.Now().Add(1 * time.Second)
+	}
+
+	saveFile := func() {
+		if filePath == "" {
+			return
+		}
+		file, err := os.Create(filePath)
+		if err != nil {
+			log.Fatalf("Failed to save file: %v", err)
+		}
+		defer file.Close()
+
+		writer := bufio.NewWriter(file)
+		for _, line := range buffer.GetContent() {
+			writer.WriteString(string(line) + "\n")
+		}
+		writer.Flush()
+		unsavedChanges = false
+		showNotification("File saved")
+	}
+
+	_ = unsavedChanges
+
 	draw := func() {
 		screen.Clear()
 
-		_, screenHeight := screen.Size()
+		screenWidth, screenHeight := screen.Size()
 
 		cursorX, cursorY := buffer.GetCursor()
 		if !mouseScrollActive {
@@ -82,6 +113,14 @@ func Editor(filePath string) {
 
 		screen.ShowCursor(len(strconv.Itoa(cursorY+1))+1+cursorX, cursorY-buffer.viewTop)
 
+		if time.Now().Before(notificationEnd) {
+			msgX := screenWidth - len(notificationMessage)
+			msgY := screenHeight - 1
+			for i, r := range notificationMessage {
+				screen.SetContent(msgX+i, msgY, r, nil, tcell.StyleDefault.Foreground(tcell.ColorGreen))
+			}
+		}
+
 		screen.Show()
 	}
 
@@ -103,16 +142,28 @@ func Editor(filePath string) {
 		switch key.Key() {
 		case tcell.KeyCtrlC:
 			quitAppConfirmation = true
+			/*
+				if unsavedChanges {
+					saveFile()
+				}
+			*/
 			quit()
 			return
+		case tcell.KeyCtrlS:
+			if unsavedChanges {
+				saveFile()
+			}
 		case tcell.KeyEnter:
 			buffer.InsertNewline()
+			unsavedChanges = true
 			adjustViewTop()
 		case tcell.KeyRune:
 			buffer.Insert(key.Rune())
+			unsavedChanges = true
 			adjustViewTop()
 		case tcell.KeyBackspace, tcell.KeyBackspace2:
 			buffer.Delete()
+			unsavedChanges = true
 			adjustViewTop()
 		case tcell.KeyLeft:
 			buffer.MoveCursor(-1, 0)
