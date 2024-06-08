@@ -11,6 +11,13 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
+const (
+	NOTIFICATION_TYPE_SUCCESS = "success"
+	NOTIFICATION_TYPE_ERROR   = "error"
+	NOTIFICATION_TYPE_WARN    = "warn"
+	NOTIFICATION_TYPE_INFO    = "info"
+)
+
 func Editor(filePath string) {
 	screen, err := tcell.NewScreen()
 	if err != nil {
@@ -30,6 +37,7 @@ func Editor(filePath string) {
 	buffer := NewBuffer()
 
 	var notificationMessage string
+	var notificationType string
 	var notificationEnd time.Time
 
 	if filePath != "" {
@@ -55,8 +63,9 @@ func Editor(filePath string) {
 		log.Println("Xona quited")
 	}
 
-	showNotification := func(message string) {
+	showNotification := func(message string, _type string) {
 		notificationMessage = message
+		notificationType = _type
 		notificationEnd = time.Now().Add(1 * time.Second)
 	}
 
@@ -64,8 +73,8 @@ func Editor(filePath string) {
 		_, cursorY := buffer.GetCursor()
 		line := buffer.content[cursorY]
 		clipboard.WriteAll(string(line))
-		
-		showNotification("Line copied to clipboard")
+
+		showNotification("Line copied to clipboard", NOTIFICATION_TYPE_SUCCESS)
 	}
 
 	saveFile := func() {
@@ -84,7 +93,7 @@ func Editor(filePath string) {
 		}
 		writer.Flush()
 		unsavedChanges = false
-		showNotification("File saved")
+		showNotification("File saved", NOTIFICATION_TYPE_SUCCESS)
 	}
 
 	_ = unsavedChanges
@@ -126,7 +135,18 @@ func Editor(filePath string) {
 			msgX := screenWidth - len(notificationMessage)
 			msgY := screenHeight - 1
 			for i, r := range notificationMessage {
-				screen.SetContent(msgX+i, msgY, r, nil, tcell.StyleDefault.Foreground(tcell.ColorGreen))
+				var color tcell.Color
+				if notificationType == NOTIFICATION_TYPE_SUCCESS {
+					color = tcell.ColorGreen
+				} else if notificationType == NOTIFICATION_TYPE_ERROR {
+					color = tcell.ColorRed
+				} else if notificationType == NOTIFICATION_TYPE_WARN {
+					color = tcell.ColorYellow
+				} else if notificationType == NOTIFICATION_TYPE_INFO {
+					color = tcell.ColorBlue
+				}
+
+				screen.SetContent(msgX+i, msgY, r, nil, tcell.StyleDefault.Foreground(color))
 			}
 		}
 
@@ -149,7 +169,7 @@ func Editor(filePath string) {
 		mouseScrollActive = false
 
 		switch key.Key() {
-		case tcell.KeyCtrlC:
+		case tcell.KeyCtrlQ:
 			quitAppConfirmation = true
 			/*
 				if unsavedChanges {
@@ -158,7 +178,7 @@ func Editor(filePath string) {
 			*/
 			quit()
 			return
-		case tcell.KeyCtrlQ:
+		case tcell.KeyCtrlS:
 			if unsavedChanges {
 				saveFile()
 			}
