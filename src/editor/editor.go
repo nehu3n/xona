@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/atotto/clipboard"
 	"github.com/gdamore/tcell/v2"
 )
 
@@ -57,6 +58,14 @@ func Editor(filePath string) {
 	showNotification := func(message string) {
 		notificationMessage = message
 		notificationEnd = time.Now().Add(1 * time.Second)
+	}
+
+	copyLineInClipboard := func() {
+		_, cursorY := buffer.GetCursor()
+		line := buffer.content[cursorY]
+		clipboard.WriteAll(string(line))
+		
+		showNotification("Line copied to clipboard")
 	}
 
 	saveFile := func() {
@@ -149,7 +158,7 @@ func Editor(filePath string) {
 			*/
 			quit()
 			return
-		case tcell.KeyCtrlS:
+		case tcell.KeyCtrlQ:
 			if unsavedChanges {
 				saveFile()
 			}
@@ -177,6 +186,8 @@ func Editor(filePath string) {
 		case tcell.KeyDown:
 			buffer.MoveCursor(0, 1)
 			adjustViewTop()
+		case tcell.KeyCtrlL:
+			copyLineInClipboard()
 		}
 	}
 
