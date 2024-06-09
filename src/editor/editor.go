@@ -121,7 +121,7 @@ func Editor(filePath string) {
 			lineNumber := strconv.Itoa(lineIdx + 1)
 
 			for x, r := range lineNumber {
-				screen.SetContent(x, y, r, nil, tcell.StyleDefault)
+				screen.SetContent(x, y, r, nil, tcell.StyleDefault.Foreground(tcell.ColorGray).Background(tcell.ColorDefault))
 			}
 
 			for x, r := range line {
