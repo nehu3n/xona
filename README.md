@@ -1,8 +1,6 @@
 <div align="center">
 
-<img src="./public/icon.png" style="height: 70px; width: 70px" />
-
-<h1 class="title">Xona</h1>
+<img src="./public/banner.png" />
 
 _A minimalist, fast and easy to use terminal text editor._
 
