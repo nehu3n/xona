@@ -74,71 +74,6 @@ func Editor(filePath string) {
 	patternsMap := highlight.LoadAllPatterns()
 	var highlighter *highlight.Highlighter = highlight.NewHighlighter(patternsMap["txt.toml"])
 
-	if filePath != "" {
-		file, err := os.Open(filePath)
-		if err != nil {
-			log.Fatalf("Failed to open file: %v", err)
-		}
-		defer file.Close()
-
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			buffer.InsertString(scanner.Text())
-			buffer.InsertNewline()
-		}
-
-		if err := scanner.Err(); err != nil {
-			log.Fatalf("Failed to read file: %v", err)
-		}
-
-		ext := filepath.Ext(filePath)
-
-		tomlFileLang, ok := extensionsHighlight[ext]
-		if ok {
-			highlighter = highlight.NewHighlighter(patternsMap[tomlFileLang])
-		}
-	}
-
-	quit := func() {
-		screen.Fini()
-		log.Println("Xona quited")
-	}
-
-	showNotification := func(message string, _type string) {
-		notificationMessage = message
-		notificationType = _type
-		notificationEnd = time.Now().Add(1 * time.Second)
-	}
-
-	copyLineInClipboard := func() {
-		_, cursorY := buffer.GetCursor()
-		line := buffer.content[cursorY]
-		clipboard.WriteAll(string(line))
-
-		showNotification("Line copied to clipboard", NOTIFICATION_TYPE_SUCCESS)
-	}
-
-	saveFile := func() {
-		if filePath == "" {
-			return
-		}
-		file, err := os.Create(filePath)
-		if err != nil {
-			log.Fatalf("Failed to save file: %v", err)
-		}
-		defer file.Close()
-
-		writer := bufio.NewWriter(file)
-		for _, line := range buffer.GetContent() {
-			writer.WriteString(string(line) + "\n")
-		}
-		writer.Flush()
-		unsavedChanges = false
-		showNotification("File saved", NOTIFICATION_TYPE_SUCCESS)
-	}
-
-	_ = unsavedChanges
-
 	draw := func() {
 		screen.Clear()
 
@@ -217,6 +152,124 @@ func Editor(filePath string) {
 
 		screen.Show()
 	}
+
+	askForNewFilePath := func(screen tcell.Screen) string {
+		screenWidth, _ := screen.Size()
+
+		prompt := "Enter file path: "
+		x := screenWidth - len(prompt) - 1
+
+		input := ""
+		for {
+			draw()
+			for i, r := range prompt {
+				screen.SetContent(x+i, 0, r, nil, tcell.StyleDefault.Foreground(tcell.ColorWhite))
+			}
+			for i, r := range input {
+				screen.SetContent(x+len(prompt)+i, 0, r, nil, tcell.StyleDefault.Foreground(tcell.ColorYellow))
+			}
+			screen.Show()
+
+			ev := screen.PollEvent()
+			switch ev := ev.(type) {
+			case *tcell.EventKey:
+				switch ev.Key() {
+				case tcell.KeyCtrlQ:
+					return ""
+				case tcell.KeyESC:
+					return ""
+				case tcell.KeyEnter:
+					return input
+				case tcell.KeyRune:
+					input += string(ev.Rune())
+				case tcell.KeyDelete:
+					if len(input) > 0 {
+						input = input[:len(input)-1]
+					}
+				case tcell.KeyBackspace, tcell.KeyBackspace2:
+					if len(input) > 0 {
+						input = input[:len(input)-1]
+					}
+				}
+
+				x = screenWidth - len(prompt) - len(input) - 1
+				if x < 0 {
+					x = 0
+				}
+			}
+		}
+	}
+
+	if filePath != "" {
+		file, err := os.Open(filePath)
+		if err != nil {
+			log.Fatalf("Failed to open file: %v", err)
+		}
+		defer file.Close()
+
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			buffer.InsertString(scanner.Text())
+			buffer.InsertNewline()
+		}
+
+		if err := scanner.Err(); err != nil {
+			log.Fatalf("Failed to read file: %v", err)
+		}
+
+		ext := filepath.Ext(filePath)
+
+		tomlFileLang, ok := extensionsHighlight[ext]
+		if ok {
+			highlighter = highlight.NewHighlighter(patternsMap[tomlFileLang])
+		}
+	}
+
+	quit := func() {
+		screen.Fini()
+		log.Println("Xona quited")
+	}
+
+	showNotification := func(message string, _type string) {
+		notificationMessage = message
+		notificationType = _type
+		notificationEnd = time.Now().Add(1 * time.Second)
+	}
+
+	copyLineInClipboard := func() {
+		_, cursorY := buffer.GetCursor()
+		line := buffer.content[cursorY]
+		clipboard.WriteAll(string(line))
+
+		showNotification("Line copied to clipboard", NOTIFICATION_TYPE_SUCCESS)
+	}
+
+	saveFile := func() {
+		if filePath == "" {
+			newFilePath := askForNewFilePath(screen)
+
+			if newFilePath == "" {
+				return
+			} else {
+				filePath = newFilePath
+			}
+		}
+		file, err := os.Create(filePath)
+		if err != nil {
+			log.Fatalf("Failed to save file: %v", err)
+		}
+		defer file.Close()
+
+		writer := bufio.NewWriter(file)
+		for _, line := range buffer.GetContent() {
+			writer.WriteString(string(line) + "\n")
+		}
+		writer.Flush()
+		unsavedChanges = false
+		showNotification("File saved", NOTIFICATION_TYPE_SUCCESS)
+	}
+
+	_ = unsavedChanges
 
 	adjustViewTop := func() {
 		cursorY, _ := buffer.GetCursor()
