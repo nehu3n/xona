@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"log"
 	"os"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -16,6 +17,12 @@ const (
 	NOTIFICATION_TYPE_ERROR   = "error"
 	NOTIFICATION_TYPE_WARN    = "warn"
 	NOTIFICATION_TYPE_INFO    = "info"
+)
+
+var (
+	searchMode    bool
+	searchQuery   string
+	searchResults []int
 )
 
 func Editor(filePath string) {
@@ -33,6 +40,8 @@ func Editor(filePath string) {
 
 	var quitAppConfirmation bool = false
 	var unsavedChanges bool = false
+
+	var highlightSearch bool = false
 
 	buffer := NewBuffer()
 
@@ -124,12 +133,31 @@ func Editor(filePath string) {
 				screen.SetContent(x, y, r, nil, tcell.StyleDefault.Foreground(tcell.ColorGray).Background(tcell.ColorDefault))
 			}
 
+			highlightSearch = false
+			for _, match := range searchResults {
+				if match == lineIdx {
+					highlightSearch = true
+					break
+				}
+			}
+
 			for x, r := range line {
-				screen.SetContent(len(lineNumber)+1+x, y, r, nil, tcell.StyleDefault)
+				style := tcell.StyleDefault
+				if highlightSearch {
+					style = tcell.StyleDefault.Foreground(tcell.ColorBlack).Background(tcell.ColorYellow)
+				}
+				screen.SetContent(len(lineNumber)+1+x, y, r, nil, style)
 			}
 		}
 
 		screen.ShowCursor(len(strconv.Itoa(cursorY+1))+1+cursorX, cursorY-buffer.viewTop)
+
+		if searchMode {
+			searchPrompt := "Search: " + searchQuery
+			for i, r := range searchPrompt {
+				screen.SetContent(screenWidth-len(searchPrompt)+i, 0, r, nil, tcell.StyleDefault.Foreground(tcell.ColorNavajoWhite))
+			}
+		}
 
 		if time.Now().Before(notificationEnd) {
 			msgX := screenWidth - len(notificationMessage)
@@ -165,8 +193,58 @@ func Editor(filePath string) {
 		}
 	}
 
+	performSearch := func(query string) []int {
+		var results []int
+		for i, line := range buffer.GetContent() {
+			matched, _ := regexp.MatchString(query, string(line))
+			if matched {
+				results = append(results, i)
+			}
+		}
+		return results
+	}
+
 	handleKey := func(key *tcell.EventKey) {
 		mouseScrollActive = false
+
+		if searchMode {
+			switch key.Key() {
+			case tcell.KeyCtrlQ:
+				searchMode = false
+				searchQuery = ""
+				searchResults = nil
+
+				if highlightSearch {
+					highlightSearch = false
+				}
+			case tcell.KeyEscape:
+				searchMode = false
+				searchQuery = ""
+				searchResults = nil
+
+				if highlightSearch {
+					highlightSearch = false
+				}
+			case tcell.KeyEnter:
+				searchMode = false
+				searchResults = performSearch(searchQuery)
+				if len(searchResults) > 0 {
+					buffer.SetCursor(0, searchResults[0])
+					adjustViewTop()
+				}
+
+				searchQuery = ""
+			case tcell.KeyBackspace, tcell.KeyBackspace2:
+				if len(searchQuery) > 0 {
+					searchQuery = searchQuery[:len(searchQuery)-1]
+				}
+			case tcell.KeyRune:
+				searchQuery += string(key.Rune())
+			case tcell.KeyDelete:
+				searchQuery = string(searchQuery[len(searchQuery)-1])
+			}
+			return
+		}
 
 		switch key.Key() {
 		case tcell.KeyCtrlQ:
@@ -182,6 +260,8 @@ func Editor(filePath string) {
 			if unsavedChanges {
 				saveFile()
 			}
+		case tcell.KeyCtrlF:
+			searchMode = true
 		case tcell.KeyEnter:
 			buffer.InsertNewline()
 			unsavedChanges = true
