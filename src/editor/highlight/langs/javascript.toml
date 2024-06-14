@@ -1,0 +1,31 @@
+# JavaScript file
+
+# NOTE: Colors are in RGB format.
+
+[keywords]
+patterns = ["var", "let", "const", "if", "else", "for", "while", "do", "switch", "case", "break", "continue", "function", "return", "import", "export", "default", "class", "extends", "new", "try", "catch", "finally", "throw"]
+color = "161, 107, 255" # Purple
+
+[types]
+patterns = ["String", "Number", "Boolean", "Array", "Object", "Symbol", "null", "undefined", "NaN", "Infinity"]
+color = "161, 107, 255" # Purple
+
+[comments]
+patterns = ["//.*", "/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)*/"]
+color = "99, 96, 93" # Gray
+
+[strings]
+patterns = ["\"(?:\\\\.|[^\\\\\"])*\"", "'(?:\\\\.|[^\\\\'])*'", "`(?:\\\\.|[^\\\\`])*`"]
+color = "217, 162, 113" # Orange
+
+[numbers]
+patterns = ["\\b\\d+(?:\\.\\d+)?\\b"]
+color = "217, 162, 113" # Orange
+
+[operators]
+patterns = ["\\+\\+", "--", "\\+=", "-=", "\\*=", "/=", "&&", "\\|\\|", "!=", "==", "<=", ">=", "\\+", "-", "\\*", "/", "%", "!", "=", "=>", "<", ">", "\\{", "\\}", "\\[", "\\]", "\\(", "\\)"]
+color = "161, 107, 255" # Purple
+
+[methods]
+patterns = ["\\b\\w+\\s*\\("]
+color = "84, 132, 227" # Blue

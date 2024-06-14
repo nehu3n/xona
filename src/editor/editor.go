@@ -4,9 +4,11 @@ import (
 	"bufio"
 	"log"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"time"
+	"xona/src/editor/highlight"
 
 	"github.com/atotto/clipboard"
 	"github.com/gdamore/tcell/v2"
@@ -24,6 +26,26 @@ var (
 	searchQuery   string
 	searchResults []int
 )
+
+var extensionsHighlight map[string]string = map[string]string{
+	".go":   "go.toml",
+	".py":   "python.toml",
+	".js":   "javascript.toml",
+	".ts":   "typescript.toml",
+	".rs":   "rust.toml",
+	".rb":   "ruby.toml",
+	".sh":   "bash.toml",
+	".cs":   "csharp.toml",
+	".md":   "markdown.toml",
+	".php":  "php.toml",
+	".html": "html.toml",
+	".css":  "css.toml",
+	".toml": "toml.toml",
+	".json": "json.toml",
+	".yaml": "yaml.toml",
+	".xml":  "xml.toml",
+	".sql":  "sql.toml",
+}
 
 func Editor(filePath string) {
 	screen, err := tcell.NewScreen()
@@ -49,6 +71,9 @@ func Editor(filePath string) {
 	var notificationType string
 	var notificationEnd time.Time
 
+	patternsMap := highlight.LoadAllPatterns()
+	var highlighter *highlight.Highlighter = highlight.NewHighlighter(patternsMap["txt.toml"])
+
 	if filePath != "" {
 		file, err := os.Open(filePath)
 		if err != nil {
@@ -64,6 +89,13 @@ func Editor(filePath string) {
 
 		if err := scanner.Err(); err != nil {
 			log.Fatalf("Failed to read file: %v", err)
+		}
+
+		ext := filepath.Ext(filePath)
+
+		tomlFileLang, ok := extensionsHighlight[ext]
+		if ok {
+			highlighter = highlight.NewHighlighter(patternsMap[tomlFileLang])
 		}
 	}
 
@@ -129,6 +161,8 @@ func Editor(filePath string) {
 			line := buffer.content[lineIdx]
 			lineNumber := strconv.Itoa(lineIdx + 1)
 
+			styles := highlighter.Highlight(string(line))
+
 			for x, r := range lineNumber {
 				screen.SetContent(x, y, r, nil, tcell.StyleDefault.Foreground(tcell.ColorGray).Background(tcell.ColorDefault))
 			}
@@ -142,10 +176,13 @@ func Editor(filePath string) {
 			}
 
 			for x, r := range line {
-				style := tcell.StyleDefault
+				var style tcell.Style
+				style = styles[x]
+
 				if highlightSearch {
 					style = tcell.StyleDefault.Foreground(tcell.ColorBlack).Background(tcell.ColorYellow)
 				}
+
 				screen.SetContent(len(lineNumber)+1+x, y, r, nil, style)
 			}
 		}
