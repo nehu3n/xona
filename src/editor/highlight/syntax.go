@@ -96,26 +96,6 @@ func (h *Highlighter) Highlight(line string) []tcell.Style {
 		styleColor = tcell.NewRGBColor(int32(firstColorRGB), int32(secondColorRGB), int32(threeColorRGB))
 		applyStyle(pattern, styleColor) // Orange
 	}
-	for _, pattern := range h.patterns.Comments.Patterns {
-		var firstColorRGB int
-		var secondColorRGB int
-		var threeColorRGB int
-
-		var styleColor tcell.Color
-
-		for i, color := range strings.Split(h.patterns.Comments.Color, COLOR_SPLIT_SEPARATOR) {
-			if i == 0 {
-				firstColorRGB, _ = strconv.Atoi(color)
-			} else if i == 1 {
-				secondColorRGB, _ = strconv.Atoi(color)
-			} else if i == 2 {
-				threeColorRGB, _ = strconv.Atoi(color)
-			}
-		}
-
-		styleColor = tcell.NewRGBColor(int32(firstColorRGB), int32(secondColorRGB), int32(threeColorRGB))
-		applyStyle(pattern, styleColor) // Gray
-	}
 	for _, pattern := range h.patterns.Methods.Patterns {
 		var firstColorRGB int
 		var secondColorRGB int
@@ -155,6 +135,26 @@ func (h *Highlighter) Highlight(line string) []tcell.Style {
 
 		styleColor = tcell.NewRGBColor(int32(firstColorRGB), int32(secondColorRGB), int32(threeColorRGB))
 		applyStyle(pattern, styleColor) // Purple
+	}
+	for _, pattern := range h.patterns.Comments.Patterns {
+		var firstColorRGB int
+		var secondColorRGB int
+		var threeColorRGB int
+
+		var styleColor tcell.Color
+
+		for i, color := range strings.Split(h.patterns.Comments.Color, COLOR_SPLIT_SEPARATOR) {
+			if i == 0 {
+				firstColorRGB, _ = strconv.Atoi(color)
+			} else if i == 1 {
+				secondColorRGB, _ = strconv.Atoi(color)
+			} else if i == 2 {
+				threeColorRGB, _ = strconv.Atoi(color)
+			}
+		}
+
+		styleColor = tcell.NewRGBColor(int32(firstColorRGB), int32(secondColorRGB), int32(threeColorRGB))
+		applyStyle(pattern, styleColor) // Gray
 	}
 	for _, pattern := range h.patterns.Strings.Patterns {
 		var firstColorRGB int
