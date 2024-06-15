@@ -200,6 +200,55 @@ func Editor(filePath string) {
 		}
 	}
 
+	confirmQuitWithoutSaving := func(screen tcell.Screen) string {
+		screenWidth, _ := screen.Size()
+
+		prompt := "Do you want to save the file before leaving? (y/n): "
+		x := screenWidth - len(prompt) - 1
+
+		input := ""
+		for {
+			draw()
+			for i, r := range prompt {
+				screen.SetContent(x+i, 0, r, nil, tcell.StyleDefault.Foreground(tcell.ColorWhite))
+			}
+			for i, r := range input {
+				screen.SetContent(x+len(prompt)+i, 0, r, nil, tcell.StyleDefault.Foreground(tcell.ColorYellow))
+			}
+			screen.Show()
+
+			ev := screen.PollEvent()
+			switch ev := ev.(type) {
+			case *tcell.EventKey:
+				switch ev.Key() {
+				case tcell.KeyCtrlQ:
+					return ""
+				case tcell.KeyESC:
+					return ""
+				case tcell.KeyEnter:
+					return input
+				case tcell.KeyRune:
+					if len(input) != 3 {
+						input += string(ev.Rune())
+					}
+				case tcell.KeyDelete:
+					if len(input) > 0 {
+						input = input[:len(input)-1]
+					}
+				case tcell.KeyBackspace, tcell.KeyBackspace2:
+					if len(input) > 0 {
+						input = input[:len(input)-1]
+					}
+				}
+
+				x = screenWidth - len(prompt) - len(input) - 1
+				if x < 0 {
+					x = 0
+				}
+			}
+		}
+	}
+
 	if filePath != "" {
 		file, err := os.Open(filePath)
 		if err != nil {
@@ -269,8 +318,6 @@ func Editor(filePath string) {
 		showNotification("File saved", NOTIFICATION_TYPE_SUCCESS)
 	}
 
-	_ = unsavedChanges
-
 	adjustViewTop := func() {
 		cursorY, _ := buffer.GetCursor()
 		_, screenHeight := screen.Size()
@@ -339,13 +386,27 @@ func Editor(filePath string) {
 		switch key.Key() {
 		case tcell.KeyCtrlQ:
 			quitAppConfirmation = true
-			/*
+
+			confirmReady := false
+
+			for !confirmReady {
 				if unsavedChanges {
-					saveFile()
+					confirm := confirmQuitWithoutSaving(screen)
+
+					if confirm == "y" || confirm == "yes" || confirm == "Y" || confirm == "YES" {
+						saveFile()
+						confirmReady = true
+						quit()
+						return
+					} else if confirm == "n" || confirm == "no" || confirm == "N" || confirm == "NO" {
+						confirmReady = true
+						quit()
+						return
+					} else {
+						showNotification("Invalid confirm answer", NOTIFICATION_TYPE_ERROR)
+					}
 				}
-			*/
-			quit()
-			return
+			}
 		case tcell.KeyCtrlS:
 			if unsavedChanges {
 				saveFile()
