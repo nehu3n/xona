@@ -88,6 +88,9 @@ func Editor(filePath string) {
 			}
 		}
 
+		maxLineNumber := len(buffer.content)
+		maxLineNumberLen := len(strconv.Itoa(maxLineNumber))
+
 		for y := 0; y < screenHeight; y++ {
 			lineIdx := buffer.viewTop + y
 			if lineIdx >= len(buffer.content) {
@@ -98,8 +101,11 @@ func Editor(filePath string) {
 
 			styles := highlighter.Highlight(string(line))
 
+			lineNumberSpace := maxLineNumberLen + 1
+			lineNumberXOffset := maxLineNumberLen - len(lineNumber)
+
 			for x, r := range lineNumber {
-				screen.SetContent(x, y, r, nil, tcell.StyleDefault.Foreground(tcell.ColorGray).Background(tcell.ColorDefault))
+				screen.SetContent(lineNumberXOffset+x, y, r, nil, tcell.StyleDefault.Foreground(tcell.ColorGray).Background(tcell.ColorDefault))
 			}
 
 			highlightSearch = false
@@ -118,11 +124,11 @@ func Editor(filePath string) {
 					style = tcell.StyleDefault.Foreground(tcell.ColorBlack).Background(tcell.ColorYellow)
 				}
 
-				screen.SetContent(len(lineNumber)+1+x, y, r, nil, style)
+				screen.SetContent(lineNumberSpace+x, y, r, nil, style)
 			}
 		}
 
-		screen.ShowCursor(len(strconv.Itoa(cursorY+1))+1+cursorX, cursorY-buffer.viewTop)
+		screen.ShowCursor(maxLineNumberLen+1+cursorX, cursorY-buffer.viewTop)
 
 		if searchMode {
 			searchPrompt := "Search: "
