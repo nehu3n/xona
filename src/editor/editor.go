@@ -125,9 +125,14 @@ func Editor(filePath string) {
 		screen.ShowCursor(len(strconv.Itoa(cursorY+1))+1+cursorX, cursorY-buffer.viewTop)
 
 		if searchMode {
-			searchPrompt := "Search: " + searchQuery
+			searchPrompt := "Search: "
+
 			for i, r := range searchPrompt {
-				screen.SetContent(screenWidth-len(searchPrompt)+i, 0, r, nil, tcell.StyleDefault.Foreground(tcell.ColorNavajoWhite))
+				screen.SetContent(screenWidth-len(searchPrompt)-len(searchQuery)+i, 0, r, nil, tcell.StyleDefault.Foreground(tcell.ColorWhite))
+			}
+
+			for i, r := range searchQuery {
+				screen.SetContent(screenWidth-len(searchQuery)+i, 0, r, nil, tcell.StyleDefault.Foreground(tcell.ColorYellow))
 			}
 		}
 
