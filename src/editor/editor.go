@@ -126,40 +126,40 @@ func (e *Editor) Run(filePath string) {
 			screen.Clear()
 
 			screenWidth, screenHeight := screen.Size()
-			var offsetX, offsetY, _, height int
+			var offsetX, offsetY, width, height int
 
 			numWindows := len(e.windows)
 			switch numWindows {
 			case 1:
-				offsetX, offsetY, _, height = 0, 0, screenWidth, screenHeight
+				offsetX, offsetY, width, height = 0, 0, screenWidth, screenHeight
 			case 2:
-				if i == 0 {
-					offsetX, offsetY, _, height = 0, 0, screenWidth/2, screenHeight
-				} else {
-					offsetX, offsetY, _, height = screenWidth/2, 0, screenWidth/2, screenHeight
-				}
+				width = screenWidth / 2
+				height = screenHeight
+				offsetX = i * width
 			case 3:
+				width = screenWidth / 2
+				height = screenHeight / 2
 				if i == 0 {
-					offsetX, offsetY, _, height = 0, 0, screenWidth, screenHeight/2
+					offsetX, offsetY = 0, 0
 				} else {
-					offsetX, offsetY, _, height = (i-1)*(screenWidth/2), screenHeight/2, screenWidth/2, screenHeight/2
+					offsetX = (i - 1) * width
+					offsetY = screenHeight / 2
 				}
 			case 4:
-				offsetX = (i % 2) * (screenWidth / 2)
-				offsetY = (i / 2) * (screenHeight / 2)
-				_ = screenWidth / 2
+				width = screenWidth / 2
 				height = screenHeight / 2
-			default:
-				return
+				offsetX = (i % 2) * width
+				offsetY = (i / 2) * height
 			}
 
 			buffer := window.buffer
 			cursorX, cursorY := buffer.GetCursor()
+
 			if !mouseScrollActive {
 				if cursorY < buffer.viewTop {
 					buffer.viewTop = cursorY
-				} else if cursorY >= buffer.viewTop+screenHeight {
-					buffer.viewTop = cursorY - screenHeight + 1
+				} else if cursorY >= buffer.viewTop+height {
+					buffer.viewTop = cursorY - height + 1
 				}
 			}
 
