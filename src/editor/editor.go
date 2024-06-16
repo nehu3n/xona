@@ -355,9 +355,24 @@ func Editor(filePath string) {
 	duplicateLine := func() {
 		cursorX, cursorY := buffer.GetCursor()
 		line := buffer.content[cursorY]
+
 		buffer.InsertNewline()
 		buffer.InsertString(string(line))
 		buffer.SetCursor(cursorX, cursorY+1)
+
+		showNotification("Duplicated line", NOTIFICATION_TYPE_SUCCESS)
+	}
+
+	cutLine := func() {
+		cursorX, cursorY := buffer.GetCursor()
+		if cursorY == 0 {
+			return
+		}
+
+		buffer.content = append(buffer.content[:cursorY], buffer.content[cursorY+1:]...)
+		buffer.SetCursor(cursorX, cursorY-1)
+
+		showNotification("Cut line", NOTIFICATION_TYPE_SUCCESS)
 	}
 
 	handleKey := func(key *tcell.EventKey) {
@@ -460,6 +475,8 @@ func Editor(filePath string) {
 			copyLineInClipboard()
 		case tcell.KeyCtrlD:
 			duplicateLine()
+		case tcell.KeyCtrlK:
+			cutLine()
 		}
 	}
 
