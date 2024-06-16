@@ -352,6 +352,14 @@ func Editor(filePath string) {
 		return results
 	}
 
+	duplicateLine := func() {
+		cursorX, cursorY := buffer.GetCursor()
+		line := buffer.content[cursorY]
+		buffer.InsertNewline()
+		buffer.InsertString(string(line))
+		buffer.SetCursor(cursorX, cursorY+1)
+	}
+
 	handleKey := func(key *tcell.EventKey) {
 		mouseScrollActive = false
 
@@ -450,6 +458,8 @@ func Editor(filePath string) {
 			adjustViewTop()
 		case tcell.KeyCtrlL:
 			copyLineInClipboard()
+		case tcell.KeyCtrlD:
+			duplicateLine()
 		}
 	}
 
