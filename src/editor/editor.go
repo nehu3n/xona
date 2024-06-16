@@ -163,6 +163,21 @@ func (e *Editor) Run(filePath string) {
 				}
 			}
 
+			styleDivisoryLines := tcell.StyleDefault
+			styleDivisoryLines = styleDivisoryLines.Foreground(tcell.ColorGray)
+
+			if i > 0 {
+				for x := 0; x < width; x++ {
+					screen.SetContent(offsetX+x, offsetY-1, '─', nil, styleDivisoryLines)
+				}
+			}
+
+			if i > 0 {
+				for y := 0; y < height; y++ {
+					screen.SetContent(offsetX-1, offsetY+y, '│', nil, styleDivisoryLines)
+				}
+			}
+
 			maxLineNumber := len(buffer.content)
 			maxLineNumberLen := len(strconv.Itoa(maxLineNumber))
 
