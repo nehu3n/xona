@@ -31,7 +31,7 @@ func InitCli() {
 		Action: func(c *cli.Context) error {
 			filePath := c.Args().Get(0)
 
-			editor.Editor(filePath)
+			editor.NewEditor().Run(filePath)
 			return nil
 		},
 	}

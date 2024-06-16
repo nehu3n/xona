@@ -25,6 +25,8 @@ var (
 	searchMode    bool
 	searchQuery   string
 	searchResults []int
+
+	currentWindowIndex int
 )
 
 var extensionsHighlight map[string]string = map[string]string{
@@ -47,15 +49,60 @@ var extensionsHighlight map[string]string = map[string]string{
 	".sql":  "sql.toml",
 }
 
-func Editor(filePath string) {
-	screen, err := tcell.NewScreen()
+type Editor struct {
+	windows []*Window
+}
+
+func NewEditor() *Editor {
+	windowScreen, err := tcell.NewScreen()
 	if err != nil {
 		log.Fatalf("Failed to create screen: %v", err)
 	}
+
+	windows := append([]*Window{}, &Window{buffer: NewBuffer(), screen: windowScreen})
+
+	return &Editor{
+		windows: windows,
+	}
+}
+
+func (e *Editor) openNewWindow() {
+	if len(e.windows) == 4 {
+		return
+	}
+
+	windowScreen, err := tcell.NewScreen()
+	if err != nil {
+		log.Fatalf("Failed to create screen: %v", err)
+	}
+
+	e.windows = append(e.windows, &Window{buffer: NewBuffer(), screen: windowScreen})
+	currentWindowIndex = len(e.windows) - 1
+
+	if err := windowScreen.Init(); err != nil {
+		log.Fatalf("Failed to initialize new window screen: %v", err)
+	}
+}
+func (e *Editor) switchWindow() {
+	numWindows := len(e.windows)
+	if numWindows > 1 {
+		currentWindowIndex = (currentWindowIndex + 1) % numWindows
+	}
+
+}
+
+func (e *Editor) Run(filePath string) {
+	currentWindowIndex = 0
+	var screen tcell.Screen = e.windows[currentWindowIndex].screen
+
 	if err := screen.Init(); err != nil {
 		log.Fatalf("Failed to initialize screen: %v", err)
 	}
-	defer screen.Fini()
+	defer func() {
+		for _, window := range e.windows {
+			window.screen.Fini()
+		}
+	}()
 
 	screen.EnableMouse()
 	var mouseScrollActive bool = true
@@ -64,8 +111,7 @@ func Editor(filePath string) {
 	var unsavedChanges bool = false
 
 	var highlightSearch bool = false
-
-	buffer := NewBuffer()
+	buffer := e.windows[currentWindowIndex].buffer
 
 	var notificationMessage string
 	var notificationType string
@@ -75,93 +121,123 @@ func Editor(filePath string) {
 	var highlighter *highlight.Highlighter = highlight.NewHighlighter(patternsMap["txt.toml"])
 
 	draw := func() {
-		screen.Clear()
+		for i, window := range e.windows {
+			screen := window.screen
+			screen.Clear()
 
-		screenWidth, screenHeight := screen.Size()
+			screenWidth, screenHeight := screen.Size()
+			var offsetX, offsetY, _, height int
 
-		cursorX, cursorY := buffer.GetCursor()
-		if !mouseScrollActive {
-			if cursorY < buffer.viewTop {
-				buffer.viewTop = cursorY
-			} else if cursorY >= buffer.viewTop+screenHeight {
-				buffer.viewTop = cursorY - screenHeight + 1
+			numWindows := len(e.windows)
+			switch numWindows {
+			case 1:
+				offsetX, offsetY, _, height = 0, 0, screenWidth, screenHeight
+			case 2:
+				if i == 0 {
+					offsetX, offsetY, _, height = 0, 0, screenWidth/2, screenHeight
+				} else {
+					offsetX, offsetY, _, height = screenWidth/2, 0, screenWidth/2, screenHeight
+				}
+			case 3:
+				if i == 0 {
+					offsetX, offsetY, _, height = 0, 0, screenWidth, screenHeight/2
+				} else {
+					offsetX, offsetY, _, height = (i-1)*(screenWidth/2), screenHeight/2, screenWidth/2, screenHeight/2
+				}
+			case 4:
+				offsetX = (i % 2) * (screenWidth / 2)
+				offsetY = (i / 2) * (screenHeight / 2)
+				_ = screenWidth / 2
+				height = screenHeight / 2
+			default:
+				return
 			}
-		}
 
-		maxLineNumber := len(buffer.content)
-		maxLineNumberLen := len(strconv.Itoa(maxLineNumber))
-
-		for y := 0; y < screenHeight; y++ {
-			lineIdx := buffer.viewTop + y
-			if lineIdx >= len(buffer.content) {
-				break
-			}
-			line := buffer.content[lineIdx]
-			lineNumber := strconv.Itoa(lineIdx + 1)
-
-			styles := highlighter.Highlight(string(line))
-
-			lineNumberSpace := maxLineNumberLen + 1
-			lineNumberXOffset := maxLineNumberLen - len(lineNumber)
-
-			for x, r := range lineNumber {
-				screen.SetContent(lineNumberXOffset+x, y, r, nil, tcell.StyleDefault.Foreground(tcell.ColorGray).Background(tcell.ColorDefault))
+			buffer := window.buffer
+			cursorX, cursorY := buffer.GetCursor()
+			if !mouseScrollActive {
+				if cursorY < buffer.viewTop {
+					buffer.viewTop = cursorY
+				} else if cursorY >= buffer.viewTop+screenHeight {
+					buffer.viewTop = cursorY - screenHeight + 1
+				}
 			}
 
-			highlightSearch = false
-			for _, match := range searchResults {
-				if match == lineIdx {
-					highlightSearch = true
+			maxLineNumber := len(buffer.content)
+			maxLineNumberLen := len(strconv.Itoa(maxLineNumber))
+
+			for y := 0; y < height; y++ {
+				lineIdx := buffer.viewTop + y
+				if lineIdx >= len(buffer.content) {
 					break
 				}
-			}
+				line := buffer.content[lineIdx]
+				lineNumber := strconv.Itoa(lineIdx + 1)
 
-			for x, r := range line {
-				var style tcell.Style
-				style = styles[x]
+				styles := highlighter.Highlight(string(line))
 
-				if highlightSearch {
-					style = tcell.StyleDefault.Foreground(tcell.ColorBlack).Background(tcell.ColorYellow)
+				lineNumberSpace := maxLineNumberLen + 1
+				lineNumberXOffset := maxLineNumberLen - len(lineNumber)
+
+				for x, r := range lineNumber {
+					screen.SetContent(offsetX+lineNumberXOffset+x, offsetY+y, r, nil, tcell.StyleDefault.Foreground(tcell.ColorGray).Background(tcell.ColorDefault))
 				}
 
-				screen.SetContent(lineNumberSpace+x, y, r, nil, style)
-			}
-		}
-
-		screen.ShowCursor(maxLineNumberLen+1+cursorX, cursorY-buffer.viewTop)
-
-		if searchMode {
-			searchPrompt := "Search: "
-
-			for i, r := range searchPrompt {
-				screen.SetContent(screenWidth-len(searchPrompt)-len(searchQuery)+i, 0, r, nil, tcell.StyleDefault.Foreground(tcell.ColorWhite))
-			}
-
-			for i, r := range searchQuery {
-				screen.SetContent(screenWidth-len(searchQuery)+i, 0, r, nil, tcell.StyleDefault.Foreground(tcell.ColorYellow))
-			}
-		}
-
-		if time.Now().Before(notificationEnd) {
-			msgX := screenWidth - len(notificationMessage)
-			msgY := screenHeight - 1
-			for i, r := range notificationMessage {
-				var color tcell.Color
-				if notificationType == NOTIFICATION_TYPE_SUCCESS {
-					color = tcell.ColorGreen
-				} else if notificationType == NOTIFICATION_TYPE_ERROR {
-					color = tcell.ColorRed
-				} else if notificationType == NOTIFICATION_TYPE_WARN {
-					color = tcell.ColorYellow
-				} else if notificationType == NOTIFICATION_TYPE_INFO {
-					color = tcell.ColorBlue
+				highlightSearch = false
+				for _, match := range searchResults {
+					if match == lineIdx {
+						highlightSearch = true
+						break
+					}
 				}
 
-				screen.SetContent(msgX+i, msgY, r, nil, tcell.StyleDefault.Foreground(color))
-			}
-		}
+				for x, r := range line {
+					var style tcell.Style
+					style = styles[x]
 
-		screen.Show()
+					if highlightSearch {
+						style = tcell.StyleDefault.Foreground(tcell.ColorBlack).Background(tcell.ColorYellow)
+					}
+
+					screen.SetContent(offsetX+lineNumberSpace+x, offsetY+y, r, nil, style)
+				}
+			}
+
+			screen.ShowCursor(offsetX+maxLineNumberLen+1+cursorX, offsetY+cursorY-buffer.viewTop)
+
+			if searchMode && i == currentWindowIndex {
+				searchPrompt := "Search: "
+
+				for i, r := range searchPrompt {
+					screen.SetContent(screenWidth-len(searchPrompt)-len(searchQuery)+i, 0, r, nil, tcell.StyleDefault.Foreground(tcell.ColorWhite))
+				}
+
+				for i, r := range searchQuery {
+					screen.SetContent(screenWidth-len(searchQuery)+i, 0, r, nil, tcell.StyleDefault.Foreground(tcell.ColorYellow))
+				}
+			}
+
+			if time.Now().Before(notificationEnd) {
+				msgX := screenWidth - len(notificationMessage)
+				msgY := screenHeight - 1
+				for i, r := range notificationMessage {
+					var color tcell.Color
+					if notificationType == NOTIFICATION_TYPE_SUCCESS {
+						color = tcell.ColorGreen
+					} else if notificationType == NOTIFICATION_TYPE_ERROR {
+						color = tcell.ColorRed
+					} else if notificationType == NOTIFICATION_TYPE_WARN {
+						color = tcell.ColorYellow
+					} else if notificationType == NOTIFICATION_TYPE_INFO {
+						color = tcell.ColorBlue
+					}
+
+					screen.SetContent(msgX+i, msgY, r, nil, tcell.StyleDefault.Foreground(color))
+				}
+			}
+
+			screen.Show()
+		}
 	}
 
 	askForNewFilePath := func(screen tcell.Screen) string {
@@ -449,6 +525,11 @@ func Editor(filePath string) {
 			}
 		case tcell.KeyCtrlF:
 			searchMode = true
+		case tcell.KeyCtrlW:
+			e.openNewWindow()
+		case tcell.KeyTAB:
+			e.switchWindow()
+			buffer = e.windows[currentWindowIndex].buffer
 		case tcell.KeyEnter:
 			buffer.InsertNewline()
 			unsavedChanges = true
@@ -483,16 +564,43 @@ func Editor(filePath string) {
 	}
 
 	handleMouse := func(mouse *tcell.EventMouse) {
-		_, screenHeight := screen.Size()
+		screenWidth, screenHeight := e.windows[currentWindowIndex].screen.Size()
+		numWindows := len(e.windows)
+		var offsetX, offsetY, _, height int
+
+		switch numWindows {
+		case 1:
+			offsetX, offsetY, _, height = 0, 0, screenWidth, screenHeight
+		case 2:
+			if currentWindowIndex == 0 {
+				offsetX, offsetY, _, height = 0, 0, screenWidth/2, screenHeight
+			} else {
+				offsetX, offsetY, _, height = screenWidth/2, 0, screenWidth/2, screenHeight
+			}
+		case 3:
+			if currentWindowIndex == 0 {
+				offsetX, offsetY, _, height = 0, 0, screenWidth, screenHeight/2
+			} else {
+				offsetX, offsetY, _, height = (currentWindowIndex-1)*(screenWidth/2), screenHeight/2, screenWidth/2, screenHeight/2
+			}
+		case 4:
+			offsetX = (currentWindowIndex % 2) * (screenWidth / 2)
+			offsetY = (currentWindowIndex / 2) * (screenHeight / 2)
+			_ = screenWidth / 2
+			height = screenHeight / 2
+		default:
+			return
+		}
+
 		switch mouse.Buttons() {
 		case tcell.Button1:
 			mouseScrollActive = false
 			mouseX, mouseY := mouse.Position()
-			newCursorY := buffer.viewTop + mouseY
+			newCursorY := buffer.viewTop + mouseY - offsetY
 			if newCursorY < len(buffer.content) {
 				lineNumberWidth := len(strconv.Itoa(newCursorY+1)) + 1
-				if mouseX >= lineNumberWidth {
-					newCursorX := mouseX - lineNumberWidth
+				if mouseX >= offsetX+lineNumberWidth {
+					newCursorX := mouseX - lineNumberWidth - offsetX
 					buffer.SetCursor(newCursorX, newCursorY)
 				} else {
 					buffer.SetCursor(0, newCursorY)
@@ -501,7 +609,7 @@ func Editor(filePath string) {
 			}
 		case tcell.WheelDown:
 			mouseScrollActive = true
-			if buffer.viewTop < len(buffer.content)-screenHeight {
+			if buffer.viewTop < len(buffer.content)-height {
 				buffer.viewTop++
 			}
 		case tcell.WheelUp:
