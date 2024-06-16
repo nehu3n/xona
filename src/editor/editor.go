@@ -420,11 +420,10 @@ func Editor(filePath string) {
 		switch key.Key() {
 		case tcell.KeyCtrlQ:
 			quitAppConfirmation = true
+			if unsavedChanges {
+				confirmReady := false
 
-			confirmReady := false
-
-			for !confirmReady {
-				if unsavedChanges {
+				for !confirmReady {
 					confirm := confirmQuitWithoutSaving(screen)
 
 					if confirm == "y" || confirm == "yes" || confirm == "Y" || confirm == "YES" {
@@ -439,8 +438,11 @@ func Editor(filePath string) {
 					} else {
 						showNotification("Invalid confirm answer", NOTIFICATION_TYPE_ERROR)
 					}
+
 				}
 			}
+
+			quit()
 		case tcell.KeyCtrlS:
 			if unsavedChanges {
 				saveFile()
