@@ -356,6 +356,21 @@ func (e *Editor) Run(filePath string) {
 		log.Println("Xona quited")
 	}
 
+	quitWindow := func() {
+		e.windows[currentWindowIndex].screen.Fini()
+
+		e.windows = append(e.windows[:currentWindowIndex], e.windows[currentWindowIndex+1:]...)
+
+		if currentWindowIndex >= len(e.windows) {
+			currentWindowIndex = len(e.windows) - 1
+		}
+
+		if len(e.windows) > 0 {
+			buffer = e.windows[currentWindowIndex].buffer
+			screen = e.windows[currentWindowIndex].screen
+		}
+	}
+
 	showNotification := func(message string, _type string) {
 		notificationMessage = message
 		notificationType = _type
@@ -485,30 +500,56 @@ func (e *Editor) Run(filePath string) {
 
 		switch key.Key() {
 		case tcell.KeyCtrlQ:
-			quitAppConfirmation = true
-			if unsavedChanges {
-				confirmReady := false
+			if len(e.windows) > 1 {
+				if unsavedChanges {
+					confirmReady := false
 
-				for !confirmReady {
-					confirm := confirmQuitWithoutSaving(screen)
+					for !confirmReady {
+						confirm := confirmQuitWithoutSaving(screen)
 
-					if confirm == "y" || confirm == "yes" || confirm == "Y" || confirm == "YES" {
-						saveFile()
-						confirmReady = true
-						quit()
-						return
-					} else if confirm == "n" || confirm == "no" || confirm == "N" || confirm == "NO" {
-						confirmReady = true
-						quit()
-						return
-					} else {
-						showNotification("Invalid confirm answer", NOTIFICATION_TYPE_ERROR)
+						if confirm == "y" || confirm == "yes" || confirm == "Y" || confirm == "YES" {
+							saveFile()
+							confirmReady = true
+							quitWindow()
+							return
+						} else if confirm == "n" || confirm == "no" || confirm == "N" || confirm == "NO" {
+							confirmReady = true
+							quitWindow()
+							return
+						} else {
+							showNotification("Invalid confirm answer", NOTIFICATION_TYPE_ERROR)
+						}
 					}
-
 				}
-			}
 
-			quit()
+				quitWindow()
+			} else {
+				quitAppConfirmation = true
+
+				if unsavedChanges {
+					confirmReady := false
+
+					for !confirmReady {
+						confirm := confirmQuitWithoutSaving(screen)
+
+						if confirm == "y" || confirm == "yes" || confirm == "Y" || confirm == "YES" {
+							saveFile()
+							confirmReady = true
+							quit()
+							return
+						} else if confirm == "n" || confirm == "no" || confirm == "N" || confirm == "NO" {
+							confirmReady = true
+							quit()
+							return
+						} else {
+							showNotification("Invalid confirm answer", NOTIFICATION_TYPE_ERROR)
+						}
+
+					}
+				}
+
+				quit()
+			}
 		case tcell.KeyCtrlS:
 			if unsavedChanges {
 				saveFile()
