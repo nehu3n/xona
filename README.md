@@ -2,7 +2,7 @@
 
 <img src="./public/banner.png" />
 
-_A minimalist, fast and easy to use terminal text editor._
+**_A minimalist, fast and easy to use terminal text editor._**
 
 </div>
 
@@ -12,7 +12,7 @@ _A minimalist, fast and easy to use terminal text editor._
 
 ## ✨ Features
 
-- 🧩 **Plugins:** Write plugins with _XonScript_, Xona's own high-level, easy-to-learn language.
+- 📚 **Extensible:** Xona is easily extensible and configurable. Shortcuts, themes, rendering preferences and other options are super easy to modify!
 
 - 🎀 **Minimalist:** _Lightweight_ and only with what you need!
 
