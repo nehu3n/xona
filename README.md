@@ -1,37 +1,37 @@
 <div align="center">
 
-<img src="./public/banner.png" />
-
-**_A minimalist, fast and easy to use terminal text editor._**
+<img src="./.github/logo.png" align="right" width="150px" />
 
 </div>
 
-<hr style="margin-top: 20px;"/>
+---
 
-<div style="margin-top: 25px;">
+# Xona
+
+Xona is a extremely fast, extensible, feature-rich terminal text editor. It combines modern usability with powerful features and offers a simple alternative to traditional editors like Vim and Nano. With an emphasis on accessibility and performance, Xona offers a versatile editing experience without the learning curve of tools like Neovim.
 
 ## ✨ Features
 
-- 📚 **Extensible:** Xona is easily extensible and configurable. Shortcuts, themes, rendering preferences and other options are super easy to modify!
+- Extremely fast
+- Easy to use
+- Multiple editing windows
+- Syntax highlighting to +130 languages. Extensible
+- Efficient editing of files with hundreds of thousands of lines
+- Git dashboard included
+- Highly customizable
+- Integrated file explorer
+- Creating themes
+- Full mouse support with selection, click and more
+- Search with patterns and regex
+- Efficient copy and paste
+- Persistent undo
 
-- 🎀 **Minimalist:** _Lightweight_ and only with what you need!
+## 🚀 Installation
 
-- 🚀 **Fast:** Are you in a hurry? Xona doesn't waste your time! He's _fast_ at everything!
+TODO
 
-- 💪🏼 **Easy to use:** You don't need to learn too many things, _everything is intuitive_ and well detailed!
-
-- 🎨 **Customizable:** You can _customize the editor_ to your liking! Apply your essence.
-
-## 📚 Documentation
-
-One of the advantages of Xona is its _extensive and detailed documentation_, ready to be read quickly and without much complexity. At the moment, everything can be found at [docs folder](/docs).
+##
 
 ## 📄 License
 
-**[Apache 2.0](./LICENSE)**
-
-## 🙋🏼‍♂️ Author
-
-**Nehuén/Neth** - [Github](https://github.com/nehu3n)
-
-</div>
+This project is under the [Apache 2.0 License](./LICENSE)

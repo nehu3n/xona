@@ -1,0 +1,9 @@
+[package]
+name = "xona"
+description = "An extremely fast, extensible, feature-rich terminal text editor."
+version = "0.1.0"
+readme = "README.md"
+license = "LICENSE"
+edition = "2021"
+
+[dependencies]
